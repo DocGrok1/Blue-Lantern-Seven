@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLUE LANTERN SEVEN — Governed eVTOL Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050811;
+    --bg-grid: rgba(77, 208, 225, 0.035);
+    --fg: #e8e4d8;
+    --fg-dim: #8a8c92;
+    --cyan: #4dd0e1;
+    --cyan-bright: #80deea;
+    --cyan-dim: rgba(77, 208, 225, 0.4);
+    --cyan-faint: rgba(77, 208, 225, 0.12);
+    --amber: #ff8c42;
+    --amber-dim: rgba(255, 140, 66, 0.5);
+    --green: #6abf69;
+    --hairline: rgba(232, 228, 216, 0.08);
+    --hairline-strong: rgba(232, 228, 216, 0.18);
+  }
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { background: var(–bg); }
+
+body {
+color: var(–fg);
+font-family: ‘Fraunces’, serif;
+font-weight: 350;
+min-height: 100vh;
+background-image:
+linear-gradient(var(–bg-grid) 1px, transparent 1px),
+linear-gradient(90deg, var(–bg-grid) 1px, transparent 1px);
+background-size: 40px 40px;
+overflow-x: hidden;
+-webkit-font-smoothing: antialiased;
+}
+
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background: radial-gradient(ellipse at 50% 30%, transparent 0%, var(–bg) 75%);
+pointer-events: none;
+z-index: 1;
+}
+
+.container {
+max-width: 1240px;
+margin: 0 auto;
+padding: 32px 28px 64px;
+position: relative;
+z-index: 2;
+}
+
+/* HEADER */
+header {
+display: flex;
+justify-content: space-between;
+align-items: baseline;
+border-bottom: 1px solid var(–hairline);
+padding-bottom: 20px;
+margin-bottom: 56px;
+gap: 16px;
+flex-wrap: wrap;
+}
+.brand {
+font-family: ‘Major Mono Display’, monospace;
+font-size: clamp(18px, 2.4vw, 24px);
+color: var(–cyan);
+letter-spacing: 0.04em;
+}
+.meta {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+color: var(–fg-dim);
+text-transform: uppercase;
+letter-spacing: 0.2em;
+}
+
+/* TITLE */
+.title-block { margin-bottom: 56px; max-width: 760px; }
+.eyebrow {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+color: var(–cyan);
+letter-spacing: 0.25em;
+text-transform: uppercase;
+margin-bottom: 18px;
+}
+h1 {
+font-family: ‘Fraunces’, serif;
+font-weight: 300;
+font-size: clamp(32px, 5vw, 52px);
+line-height: 1.04;
+letter-spacing: -0.02em;
+margin-bottom: 22px;
+}
+h1 em {
+font-style: italic;
+color: var(–cyan);
+font-weight: 350;
+}
+.lede {
+font-size: 17px;
+line-height: 1.55;
+color: var(–fg-dim);
+max-width: 660px;
+}
+.lede strong { color: var(–fg); font-weight: 400; }
+
+/* MAIN VIZ */
+.viz-grid {
+display: grid;
+grid-template-columns: minmax(0, 1fr) 320px;
+gap: 24px;
+margin-bottom: 64px;
+align-items: stretch;
+}
+@media (max-width: 900px) {
+.viz-grid { grid-template-columns: 1fr; }
+}
+
+.viz-stage {
+position: relative;
+aspect-ratio: 1;
+background:
+radial-gradient(circle at center, rgba(77, 208, 225, 0.05) 0%, transparent 65%),
+var(–bg);
+border: 1px solid var(–hairline-strong);
+overflow: hidden;
+}
+.stage-corner {
+position: absolute;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 9px;
+color: var(–fg-dim);
+letter-spacing: 0.18em;
+text-transform: uppercase;
+}
+.stage-corner.tl { top: 14px; left: 14px; }
+.stage-corner.tr { top: 14px; right: 14px; color: var(–cyan); }
+.stage-corner.br { bottom: 14px; right: 14px; color: var(–cyan); }
+.stage-corner.bl { bottom: 14px; left: 14px; color: var(–fg-dim); }
+
+svg.torus { width: 100%; height: 100%; display: block; }
+
+/* SVG STYLING */
+#auditRing {
+transform-origin: center;
+transform-box: fill-box;
+opacity: 0.5;
+transition: opacity 0.6s;
+}
+#auditRing.active {
+opacity: 1;
+animation: rotate 80s linear infinite;
+}
+.audit-ring {
+fill: none;
+stroke: var(–cyan-dim);
+stroke-width: 1;
+stroke-dasharray: 3 9;
+}
+#auditRing.active .audit-ring {
+stroke: var(–cyan);
+stroke-width: 1.2;
+}
+
+.phase-ring {
+fill: none;
+stroke: rgba(77, 208, 225, 0.2);
+stroke-width: 1.5;
+transition: stroke 0.6s, stroke-width 0.6s, filter 0.6s;
+}
+.phase-ring.active {
+stroke: var(–cyan);
+stroke-width: 2.5;
+filter: drop-shadow(0 0 8px rgba(77, 208, 225, 0.6));
+}
+
+.die-core {
+fill: rgba(77, 208, 225, 0.04);
+stroke: var(–fg-dim);
+stroke-width: 1;
+transition: fill 0.6s, stroke 0.6s;
+}
+.die-core.active {
+fill: rgba(77, 208, 225, 0.18);
+stroke: var(–cyan);
+animation: die-pulse 3.2s ease-in-out infinite;
+}
+.die-pin {
+stroke: var(–fg-dim);
+stroke-width: 1;
+transition: stroke 0.6s;
+}
+.die-core.active ~ .die-pin { stroke: var(–cyan-bright); }
+
+.die-label {
+fill: var(–fg-dim);
+transition: fill 0.6s;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 7px;
+letter-spacing: 1.5px;
+}
+.die-core.active ~ .die-label { fill: var(–cyan-bright); }
+
+.superconductor-overlay {
+fill: none;
+stroke: var(–amber);
+stroke-width: 1.5;
+stroke-dasharray: 1 3;
+opacity: 0;
+transition: opacity 0.8s;
+transform-origin: center;
+transform-box: fill-box;
+}
+.superconductor-overlay.active {
+opacity: 0.75;
+animation: rotate 40s linear infinite reverse;
+}
+
+@keyframes rotate {
+from { transform: rotate(0deg); }
+to { transform: rotate(360deg); }
+}
+@keyframes die-pulse {
+0%, 100% { opacity: 0.7; }
+50% { opacity: 1; }
+}
+
+/* TELEMETRY PANEL */
+.telemetry {
+background: rgba(232, 228, 216, 0.015);
+border: 1px solid var(–hairline-strong);
+padding: 18px 18px 14px;
+display: flex;
+flex-direction: column;
+min-height: 360px;
+}
+.telemetry-head {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 9px;
+letter-spacing: 0.22em;
+color: var(–fg-dim);
+text-transform: uppercase;
+border-bottom: 1px solid var(–hairline);
+padding-bottom: 10px;
+margin-bottom: 12px;
+display: flex;
+justify-content: space-between;
+}
+.telemetry-head .indicator { color: var(–green); }
+.telemetry-head .indicator::before {
+content: ‘’;
+display: inline-block;
+width: 6px;
+height: 6px;
+background: var(–green);
+border-radius: 50%;
+margin-right: 6px;
+animation: blink 1.4s ease-in-out infinite;
+vertical-align: 1px;
+}
+@keyframes blink {
+0%, 100% { opacity: 1; }
+50% { opacity: 0.3; }
+}
+.telemetry-feed {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10.5px;
+line-height: 1.75;
+color: var(–fg-dim);
+flex: 1;
+overflow: hidden;
+}
+.telemetry-feed div {
+opacity: 0;
+animation: feedline 0.4s forwards;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+.telemetry-feed div.warn { color: var(–amber); }
+.telemetry-feed div.ok { color: var(–cyan); }
+@keyframes feedline {
+from { opacity: 0; transform: translateY(4px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+/* PHASE SELECTOR */
+.phases {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 1px;
+background: var(–hairline-strong);
+border: 1px solid var(–hairline-strong);
+margin-bottom: 64px;
+}
+@media (max-width: 720px) {
+.phases { grid-template-columns: 1fr; }
+}
+.phase-btn {
+background: var(–bg);
+border: none;
+padding: 22px 20px 24px;
+color: var(–fg-dim);
+font-family: inherit;
+cursor: pointer;
+text-align: left;
+transition: background 0.3s, color 0.3s;
+font-size: inherit;
+}
+.phase-btn:hover {
+background: rgba(77, 208, 225, 0.04);
+color: var(–fg);
+}
+.phase-btn.active {
+background: rgba(77, 208, 225, 0.06);
+color: var(–fg);
+}
+.phase-btn .num {
+display: block;
+font-family: ‘Major Mono Display’, monospace;
+font-size: 28px;
+color: rgba(77, 208, 225, 0.35);
+margin-bottom: 6px;
+transition: color 0.3s;
+}
+.phase-btn.active .num { color: var(–cyan); }
+.phase-btn .name {
+display: block;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+margin-bottom: 8px;
+}
+.phase-btn .desc {
+display: block;
+font-family: ‘Fraunces’, serif;
+font-style: italic;
+font-size: 13px;
+line-height: 1.5;
+color: var(–fg-dim);
+}
+
+/* CONTROL FLOW */
+.loop-section {
+border-top: 1px solid var(–hairline);
+padding-top: 44px;
+margin-bottom: 64px;
+}
+.section-label {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.22em;
+color: var(–fg-dim);
+text-transform: uppercase;
+margin-bottom: 28px;
+}
+.loop-diagram {
+display: grid;
+grid-template-columns: repeat(7, auto);
+gap: 8px;
+align-items: center;
+justify-content: start;
+margin-bottom: 28px;
+}
+@media (max-width: 880px) {
+.loop-diagram {
+grid-template-columns: 1fr;
+}
+.loop-arrow { display: none; }
+}
+.loop-node {
+border: 1px solid var(–hairline-strong);
+padding: 14px 18px;
+background: rgba(232, 228, 216, 0.015);
+min-width: 130px;
+}
+.loop-node.kernel {
+border-color: var(–cyan-dim);
+background: rgba(77, 208, 225, 0.05);
+}
+.loop-node.kernel .node-name { color: var(–cyan); }
+.node-label {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 9px;
+color: var(–fg-dim);
+letter-spacing: 0.18em;
+margin-bottom: 5px;
+text-transform: uppercase;
+}
+.node-name {
+font-family: ‘Fraunces’, serif;
+font-size: 14px;
+color: var(–fg);
+}
+.loop-arrow {
+color: var(–fg-dim);
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+padding: 0 4px;
+}
+.loop-note {
+font-size: 14.5px;
+line-height: 1.6;
+color: var(–fg-dim);
+max-width: 760px;
+font-style: italic;
+}
+.loop-note .pull { color: var(–cyan); font-style: normal; }
+
+/* PRINCIPLES */
+.principles {
+border-top: 1px solid var(–hairline);
+padding-top: 44px;
+margin-bottom: 56px;
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 32px;
+}
+@media (max-width: 760px) {
+.principles { grid-template-columns: 1fr; }
+}
+.principle .pnum {
+font-family: ‘Major Mono Display’, monospace;
+font-size: 14px;
+color: var(–cyan);
+margin-bottom: 10px;
+}
+.principle h3 {
+font-family: ‘Fraunces’, serif;
+font-weight: 350;
+font-size: 19px;
+line-height: 1.25;
+margin-bottom: 8px;
+letter-spacing: -0.01em;
+}
+.principle p {
+font-size: 14px;
+line-height: 1.55;
+color: var(–fg-dim);
+}
+
+/* FOOTER */
+footer {
+border-top: 1px solid var(–hairline);
+padding-top: 24px;
+display: flex;
+justify-content: space-between;
+flex-wrap: wrap;
+gap: 12px;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 9.5px;
+color: var(–fg-dim);
+letter-spacing: 0.18em;
+text-transform: uppercase;
+}
+footer a { color: var(–cyan); text-decoration: none; }
+footer a:hover { color: var(–cyan-bright); }
+</style>
+
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="brand">BLUE LANTERN SEVEN</div>
+    <div class="meta">v2.0 · public draft · 04.26.2026</div>
+  </header>
+
+  <section class="title-block">
+    <div class="eyebrow">Governed Open-Source eVTOL Initiative</div>
+    <h1>A neuromorphic control halo with a <em>governance kernel</em> that can constrain but never escalate.</h1>
+    <p class="lede"><strong>Conventional propulsion. Cryptographically auditable safety.</strong> Built on ArduPilot, Loihi 2, and YBCO superconductor tape — sourceable today, open from day one. No exotic physics; the novelty is in how the aircraft thinks and proves it stayed safe.</p>
+  </section>
+
+  <div class="viz-grid">
+    <div class="viz-stage" id="vizStage">
+      <span class="stage-corner tl">TOROIDAL CONTROL HALO · TOP VIEW</span>
+      <span class="stage-corner tr" id="phaseLabel">PHASE 1 ACTIVE</span>
+      <span class="stage-corner bl">SCALE 1:1</span>
+      <span class="stage-corner br" id="hashLabel">0x7a3f...e2c1</span>
+
+```
+  <svg class="torus" viewBox="-250 -250 500 500" xmlns="http://www.w3.org/2000/svg">
+    <!-- crosshairs -->
+    <line x1="-220" y1="0" x2="-180" y2="0" stroke="rgba(232,228,216,0.06)" stroke-width="0.5"/>
+    <line x1="180" y1="0" x2="220" y2="0" stroke="rgba(232,228,216,0.06)" stroke-width="0.5"/>
+    <line x1="0" y1="-220" x2="0" y2="-180" stroke="rgba(232,228,216,0.06)" stroke-width="0.5"/>
+    <line x1="0" y1="180" x2="0" y2="220" stroke="rgba(232,228,216,0.06)" stroke-width="0.5"/>
+
+    <!-- outer audit ring with tick marks -->
+    <g id="auditRing" class="active">
+      <circle class="audit-ring" cx="0" cy="0" r="200"/>
+      <g id="auditTicks"></g>
+    </g>
+
+    <!-- inner phase-routing ring -->
+    <circle class="phase-ring active" id="phaseRing" cx="0" cy="0" r="140"/>
+
+    <!-- superconductor overlays (Phase 2) -->
+    <circle class="superconductor-overlay" id="scOverlay1" cx="0" cy="0" r="148"/>
+    <circle class="superconductor-overlay" id="scOverlay2" cx="0" cy="0" r="132"/>
+
+    <!-- inner traces (decorative, suggest phase routing) -->
+    <g opacity="0.4">
+      <line x1="-140" y1="0" x2="-50" y2="0" stroke="var(--cyan-dim)" stroke-width="0.8" stroke-dasharray="2 4"/>
+      <line x1="140" y1="0" x2="50" y2="0" stroke="var(--cyan-dim)" stroke-width="0.8" stroke-dasharray="2 4"/>
+      <line x1="0" y1="-140" x2="0" y2="-50" stroke="var(--cyan-dim)" stroke-width="0.8" stroke-dasharray="2 4"/>
+      <line x1="0" y1="140" x2="0" y2="50" stroke="var(--cyan-dim)" stroke-width="0.8" stroke-dasharray="2 4"/>
+    </g>
+
+    <!-- central die / neuromorphic core -->
+    <rect class="die-core active" id="dieCore" x="-32" y="-32" width="64" height="64" rx="1.5"/>
+    <line class="die-pin" x1="-32" y1="-18" x2="-50" y2="-18"/>
+    <line class="die-pin" x1="-32" y1="-6" x2="-50" y2="-6"/>
+    <line class="die-pin" x1="-32" y1="6" x2="-50" y2="6"/>
+    <line class="die-pin" x1="-32" y1="18" x2="-50" y2="18"/>
+    <line class="die-pin" x1="32" y1="-18" x2="50" y2="-18"/>
+    <line class="die-pin" x1="32" y1="-6" x2="50" y2="-6"/>
+    <line class="die-pin" x1="32" y1="6" x2="50" y2="6"/>
+    <line class="die-pin" x1="32" y1="18" x2="50" y2="18"/>
+    <line class="die-pin" x1="-18" y1="-32" x2="-18" y2="-50"/>
+    <line class="die-pin" x1="-6" y1="-32" x2="-6" y2="-50"/>
+    <line class="die-pin" x1="6" y1="-32" x2="6" y2="-50"/>
+    <line class="die-pin" x1="18" y1="-32" x2="18" y2="-50"/>
+    <line class="die-pin" x1="-18" y1="32" x2="-18" y2="50"/>
+    <line class="die-pin" x1="-6" y1="32" x2="-6" y2="50"/>
+    <line class="die-pin" x1="6" y1="32" x2="6" y2="50"/>
+    <line class="die-pin" x1="18" y1="32" x2="18" y2="50"/>
+    <text class="die-label" x="0" y="3" text-anchor="middle">SNN CORE</text>
+
+    <!-- die orientation marker -->
+    <circle cx="-26" cy="-26" r="1.5" fill="var(--cyan)" opacity="0.8"/>
+
+    <!-- ring labels -->
+    <text x="0" y="-218" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#8a8c92" letter-spacing="2">AUDIT RING · SHA-256 CHAIN</text>
+    <text x="0" y="166" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#8a8c92" letter-spacing="2">PHASE ROUTING · YBCO LAYER</text>
+
+    <!-- radial measurement marks -->
+    <text x="208" y="3" font-family="JetBrains Mono" font-size="7" fill="#6a6c72">r₁=200</text>
+    <text x="148" y="3" font-family="JetBrains Mono" font-size="7" fill="#6a6c72">r₂=140</text>
+  </svg>
+</div>
+
+<aside class="telemetry">
+  <div class="telemetry-head">
+    <span>GOVERNANCE FEED</span>
+    <span class="indicator">LIVE</span>
+  </div>
+  <div class="telemetry-feed" id="feed"></div>
+</aside>
+```
+
+  </div>
+
+  <nav class="phases" id="phases">
+    <button class="phase-btn" data-phase="0">
+      <span class="num">00</span>
+      <span class="name">Conventional Base</span>
+      <span class="desc">Pixhawk Cube + ArduPilot, brushless propulsion, 14S packs. Flies on its own.</span>
+    </button>
+    <button class="phase-btn active" data-phase="1">
+      <span class="num">01</span>
+      <span class="name">Governed Halo</span>
+      <span class="desc">Toroidal PCB with neuromorphic core, DVK + MC290 in the loop.</span>
+    </button>
+    <button class="phase-btn" data-phase="2">
+      <span class="num">02</span>
+      <span class="name">Superconducting</span>
+      <span class="desc">YBCO phase-routing ring, LN₂-cooled. Bench characterization first.</span>
+    </button>
+  </nav>
+
+  <section class="loop-section">
+    <div class="section-label">// Control Authority Flow</div>
+    <div class="loop-diagram">
+      <div class="loop-node">
+        <div class="node-label">Sensors</div>
+        <div class="node-name">IMU · GPS · ESC</div>
+      </div>
+      <span class="loop-arrow">──▶</span>
+      <div class="loop-node">
+        <div class="node-label">Flight Ctrl</div>
+        <div class="node-name">Pixhawk Cube</div>
+      </div>
+      <span class="loop-arrow">──▶</span>
+      <div class="loop-node kernel">
+        <div class="node-label">Governance</div>
+        <div class="node-name">DVK · MC290</div>
+      </div>
+      <span class="loop-arrow">──▶</span>
+      <div class="loop-node">
+        <div class="node-label">Actuators</div>
+        <div class="node-name">Motors</div>
+      </div>
+    </div>
+    <p class="loop-note">The kernel observes, advises, then gates. <span class="pull">It can refuse a command or trigger a rescue mode</span> — but it cannot synthesize new authority. Every gate decision is hash-chained for FAA experimental review.</p>
+  </section>
+
+  <section class="principles">
+    <div class="principle">
+      <div class="pnum">— 01</div>
+      <h3>Start with the known.</h3>
+      <p>Conventional eVTOL → neuromorphic control → superconducting power. Each phase flies on its own. No phase depends on the next.</p>
+    </div>
+    <div class="principle">
+      <div class="pnum">— 02</div>
+      <h3>Governed from day one.</h3>
+      <p>DVK + MC290 run in the flight loop from the first tethered hover. Telemetry is hash-chained for experimental airworthiness review.</p>
+    </div>
+    <div class="principle">
+      <div class="pnum">— 03</div>
+      <h3>Open by default.</h3>
+      <p>PCBs, code, BOMs, test logs published openly. Safety-critical thresholds shipped with rationale, not just numbers.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div>BLUE LANTERN SEVEN · APACHE 2.0 + PATENT GRANT</div>
+    <div>DCGP DOWNSTREAM APPLICATION · OPEN REPLICATION ENCOURAGED</div>
+  </footer>
+
+</div>
+
+<script>
+  // generate audit ring tick marks
+  const auditTicks = document.getElementById('auditTicks');
+  const tickCount = 64;
+  for (let i = 0; i < tickCount; i++) {
+    const angle = (i / tickCount) * Math.PI * 2 - Math.PI / 2;
+    const inner = i % 8 === 0 ? 192 : 196;
+    const outer = i % 8 === 0 ? 208 : 204;
+    const x1 = Math.cos(angle) * inner;
+    const y1 = Math.sin(angle) * inner;
+    const x2 = Math.cos(angle) * outer;
+    const y2 = Math.sin(angle) * outer;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.setAttribute('stroke', i % 8 === 0 ? '#4dd0e1' : 'rgba(77, 208, 225, 0.35)');
+    line.setAttribute('stroke-width', i % 8 === 0 ? '1.2' : '0.8');
+    auditTicks.appendChild(line);
+  }
+
+  // phase config
+  const phaseConfig = {
+    '0': {
+      label: 'PHASE 0 ACTIVE · CONVENTIONAL',
+      audit: false, ring: false, die: false, sc: false
+    },
+    '1': {
+      label: 'PHASE 1 ACTIVE · GOVERNED HALO',
+      audit: true, ring: true, die: true, sc: false
+    },
+    '2': {
+      label: 'PHASE 2 ACTIVE · SUPERCONDUCTING',
+      audit: true, ring: true, die: true, sc: true
+    }
+  };
+
+  function setPhase(p) {
+    const cfg = phaseConfig[p];
+    document.getElementById('auditRing').classList.toggle('active', cfg.audit);
+    document.getElementById('phaseRing').classList.toggle('active', cfg.ring);
+    document.getElementById('dieCore').classList.toggle('active', cfg.die);
+    document.getElementById('scOverlay1').classList.toggle('active', cfg.sc);
+    document.getElementById('scOverlay2').classList.toggle('active', cfg.sc);
+    document.getElementById('phaseLabel').textContent = cfg.label;
+    document.querySelectorAll('.phase-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.phase === p);
+    });
+  }
+
+  document.getElementById('phases').addEventListener('click', (e) => {
+    const btn = e.target.closest('.phase-btn');
+    if (btn) setPhase(btn.dataset.phase);
+  });
+
+  setPhase('1');
+
+  // telemetry simulation
+  const feed = document.getElementById('feed');
+  const hashLabel = document.getElementById('hashLabel');
+  let t = 0;
+  const messages = [
+    { type: 'normal', text: 'loop heartbeat ok' },
+    { type: 'normal', text: 'kernel observe: thrust nominal' },
+    { type: 'ok',     text: 'DVK check passed φ=0.987' },
+    { type: 'normal', text: 'imu drift within bounds' },
+    { type: 'normal', text: 'esc telemetry stable' },
+    { type: 'ok',     text: 'MC290 rescue window armed' },
+    { type: 'normal', text: 'spike rate 412Hz · within band' },
+    { type: 'normal', text: 'kernel observe: attitude nominal' },
+    { type: 'warn',   text: 'φ=0.910 below 0.912 threshold' },
+    { type: 'warn',   text: 'degraded mode engaged' },
+    { type: 'ok',     text: 'φ=0.951 recovered' },
+    { type: 'ok',     text: 'nominal mode resumed' },
+    { type: 'normal', text: 'governance loop · cycle complete' },
+    { type: 'normal', text: 'kernel gate: command accepted' },
+  ];
+
+  function randHash() {
+    const hex = '0123456789abcdef';
+    let s = '0x';
+    for (let i = 0; i < 4; i++) s += hex[Math.floor(Math.random()*16)];
+    s += '...';
+    for (let i = 0; i < 4; i++) s += hex[Math.floor(Math.random()*16)];
+    return s;
+  }
+
+  let msgIdx = Math.floor(Math.random() * messages.length);
+  function addLine() {
+    const msg = messages[msgIdx % messages.length];
+    msgIdx++;
+    t += Math.random() * 0.4 + 0.18;
+    const line = document.createElement('div');
+    line.className = msg.type;
+    const ts = `[T+${t.toFixed(3).padStart(7,'0')}s]`;
+    let text = msg.text;
+    if (text.includes('hash chain') || msgIdx % 5 === 0) {
+      hashLabel.textContent = randHash();
+    }
+    line.textContent = `${ts} ${text}`;
+    feed.appendChild(line);
+    while (feed.children.length > 14) {
+      feed.removeChild(feed.firstChild);
+    }
+    setTimeout(addLine, 550 + Math.random() * 750);
+  }
+  addLine();
+</script>
+
+</body>
+</html>
