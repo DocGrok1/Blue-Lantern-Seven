@@ -1,0 +1,33 @@
+{
+  "name": "blue-lantern-seven",
+  "version": "0.2.0",
+  "description": "Governed open-source eVTOL initiative — neuromorphic flight control with a cryptographically auditable safety kernel. A downstream application of the Distributed Constitutional Governance Protocol (DCGP).",
+  "license": "Apache-2.0",
+  "author": "Joshua Lopez",
+  "homepage": "./index.html",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DocGrok1/blue-lantern-seven"
+  },
+  "keywords": [
+    "evtol",
+    "neuromorphic",
+    "governance",
+    "ardupilot",
+    "loihi",
+    "superconductor",
+    "ybco",
+    "open-hardware",
+    "dcgp",
+    "flight-control"
+  ],
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve . -l 3000",
+    "format": "npx prettier --write \"**/*.{html,js,css,md,json}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0",
+    "serve": "^14.2.0"
+  }
+}
